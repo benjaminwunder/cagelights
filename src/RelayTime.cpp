@@ -2,6 +2,24 @@
 #include <vector>
 #include <string>
 #include <iostream>
+#include <stdexcept>
+#include <sstream>
+
+RelayTime::RelayTime(string time) {
+	if(time.length() != 5) {
+		throw std::invalid_argument("Time String must be in the form of hh:mm");
+	}
+	else {
+		vector<int> result;
+		time.replace(time.find(":"), 1, " ");
+		std::istringstream iss(time);
+		for(string s; iss >> s;) {
+			result.push_back(stoi(s));
+		}
+		this->hour = result[0];
+		this->minute = result[1];
+	}
+}
 
 void RelayTime::setTime(vector<int> time) {
 	if (time.size() > 2) {

@@ -10,6 +10,7 @@ class RelayTime
 {
         public:
                 RelayTime() : hour(0), minute(0) {}
+		RelayTime(string time);
 
                 void setTime(vector<int> time);               	//set the time as a vector
                 void setTime(int hour, int minute);	     	//set the time with hours and minutes

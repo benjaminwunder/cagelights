@@ -1,7 +1,9 @@
 #include <vector>
 #include <iostream>
 #include "Relay.h"
-
+#include <boost/program_options.hpp>
+#include <string>
+ 
 extern "C" {
 	#include "wiringPi.h"
 }
@@ -10,6 +12,7 @@ const int RELAY_SIZE = 4;
 const int RELAYS[] = { 1, 3, 2, 0 };
 
 using namespace std;
+namespace po = boost::program_options;
 
 void setup() {
 	wiringPiSetup();
@@ -17,62 +20,68 @@ void setup() {
 		pinMode(RELAYS[i], OUTPUT);
 }
 
-vector<int> timeUntil(vector<int> source, vector<int> target) {
-        int hours = target[0] - source[0];
-        int minutes = target[1] - source[1];
-        if (hours < 0)
-                hours += 24;
-        if (minutes < 0) {
-                hours--;
-                minutes+= 60;
-        }
-        vector<int> result;
-        result.push_back(hours);
-        result.push_back(minutes);
-        return result;
-}
-
 int main(int argc, char * argv[]) {
 
-	cout 	<< "  _________              __            _________                       \n"
-		<< " /   _____/ ____ _____  |  | __ ____   \\_   ___ \\_____     ____   ____  \n"
-		<< " \\_____  \\ /    \\\\__  \\ |  |/ // __ \\  /    \\  \\/\\__  \\   / ___\\_/ __ \\ \n"
-		<< " /        \\   |  \\/ __ \\|    <\\  ___/  \\     \\____/ __ \\_/ /_/  >  ___/ \n"
-		<< "/_______  /___|  (____  /__|_ \\\\___  >  \\______  (____  /\\___  / \\___  >\n"
-		<< "        \\/     \\/     \\/     \\/    \\/          \\/     \\//_____/      \\/ \n"
-		<< "   _____          __                         __  .__                    \n"
-		<< "  /  _  \\  __ ___/  |_  ____   _____ _____ _/  |_|__| ____   ____       \n"
-		<< " /  /_\\  \\|  |  \\   __\\/  _ \\ /     \\\\__  \\\\   __\\  |/  _ \\ /    \\      \n"
-		<< "/    |    \\  |  /|  | (  <_> )  Y Y  \\/ __ \\|  | |  (  <_> )   |  \\     \n"
-		<< "\\____|__  /____/ |__|  \\____/|__|_|  (____  /__| |__|\\____/|___|  /     \n"
-		<< "        \\/                         \\/     \\/                    \\/      \n";
+	string onTime;
+	string offTime;
+
+	po::options_description desc{"Options"};
+	desc.add_options()
+	  ("help,h", "Help Screen")
+	  ("ontime,o", po::value<string>(&onTime),"The time to activate all the relays")
+	  ("offtime,f", po::value<string>(&offTime),"The time to de-activate all the relays");
+
+	try {
+		po::variables_map vm;
+		po::store(po::parse_command_line(argc, argv, desc), vm);
+		po::notify(vm);
+	}
+	catch(const exception & e)
+	{
+		cerr << e.what() << endl << endl;
+		cout << desc << endl;
+	}
+	RelayTime rOn(onTime);
+	RelayTime rOff(offTime);
+	cout << "On Time: " << rOn.toString() << " Off Time: " << rOff.toString() << endl;
+
+	cout 	     << "  _________              __            _________"
+		<< endl << " /   _____/ ____ _____  |  | __ ____   \\_   ___ \\_____     ____   ____"
+		<< endl << " \\_____  \\ /    \\\\__  \\ |  |/ // __ \\  /    \\  \\/\\__  \\   / ___\\_/ __ \\"
+		<< endl << " /        \\   |  \\/ __ \\|    <\\  ___/  \\     \\____/ __ \\_/ /_/  >  ___/"
+		<< endl << "/_______  /___|  (____  /__|_ \\\\___  >  \\______  (____  /\\___  / \\___  >"
+		<< endl << "        \\/     \\/     \\/     \\/    \\/          \\/     \\//_____/      \\/"
+		<< endl << "   _____          __                         __  .__"
+		<< endl << "  /  _  \\  __ ___/  |_  ____   _____ _____ _/  |_|__| ____   ____"
+		<< endl << " /  /_\\  \\|  |  \\   __\\/  _ \\ /     \\\\__  \\\\   __\\  |/  _ \\ /    \\"
+		<< endl << "/    |    \\  |  /|  | (  <_> )  Y Y  \\/ __ \\|  | |  (  <_> )   |  \\"
+		<< endl << "\\____|__  /____/ |__|  \\____/|__|_|  (____  /__| |__|\\____/|___|  /"
+		<< endl << "        \\/                         \\/     \\/                    \\/"
+		<< endl;
+
 	setup();
 
 	vector<Relay> relays;
 
-	RelayTime t1;
-	t1.setHour(16);
-	t1.setMinute(15);
+	RelayTime timeDiff = rOff - rOn;
 
-	RelayTime t2;
-	t2.setHour(16);
-	t2.setMinute(12);
+	cout << "Relays will be active for : " << timeDiff.getHour() << " hours and " << timeDiff.getMinute() << " minutes." << endl;
 
-	RelayTime t3 = t2 - t1;
-
-	cout << "t3 to string: " << t3.toString() << "\n";
-
+	cout << "Creating Relays..." << endl;
 	for(int i = 0; i < RELAY_SIZE; i++) {
-		cout << "Creating Relay " << i << "...\n";
 		Relay r;
 		r.setPinNumber(RELAYS[i]);
 		r.setType(ARDUINO);
+		r.setTimeOn(rOn);
+		r.setTimeOff(rOff);
 		relays.push_back(r);
 	}
 
+	cout << "Testing Relays.  Please verify the board is responding appropriately." << endl;
 	for(int i = 0; i < RELAY_SIZE; i++) {
+		cout << i << " " << flush;
 		relays[i].turnOn();
-		delay(1000);
+		delay(2000);
 		relays[i].turnOff();
 	}
 	cout << "Done!\n";

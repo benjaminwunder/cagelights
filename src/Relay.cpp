@@ -1,7 +1,7 @@
 #include <vector>
 #include <iostream>
 #include "Relay.h"
-
+ 
 extern "C" {
 	#include "wiringPi.h"
 }
