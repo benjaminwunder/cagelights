@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <string>
+#include "RelayTime.h"
 
 using namespace std;
 
@@ -21,25 +22,23 @@ class Relay
 
 		void turnOn();
 		void turnOff();
-		
+
 		void writeState();
 
 		int getPinNumber() const;						//return pin number
 		void setPinNumber(int pinNumber);					//set the pin number
 
-		vector<int> getOnTime() const;						//get the time in a vector
-		vector<int> getOffTime() const;						//get the time in a vector
-		void setTime(vector<int> onTime, vector<int> offTime);			//set the time as a vector
-		void setTime(int onHour, int onMinute, int offHour, int offMinute);	//set the time with hours and minutes
-		bool operator==(const Relay& other);
-		bool operator!=(const Relay& other);
+		RelayTime getTimeOn() const;						//get the time to turn on
+		RelayTime getTimeOff() const;						//get the time to turn off
+
+		void setTimeOn(RelayTime timeOn);					//set the time to turn on
+		void setTimeOff(RelayTime timeOff);					//set the time to turn off
+
 	private:
-		int state;								//the state (on or off)
+		int state;								//the state (low or high)
 		int relayType;
 		int pinNumber;								//the pin for this relay
-		int onHour;
-		int onMinute;
-		int offHour;
-		int offMinute;
+		RelayTime timeOn;
+		RelayTime timeOff;
 };
 #endif
